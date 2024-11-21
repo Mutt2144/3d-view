@@ -176,65 +176,44 @@ void handle_special_keys_up(int key, int x, int y) {
 #pragma endregion
 
 void draw_chunks() {
-    for (float chunkX = 0; chunkX < chunks.size(); chunkX++) {
-        for (float chunckZ = 0; chunckZ < chunks[chunkX].size(); chunckZ++) {
+    for (int chunkX = 0; chunkX < chunks.size(); chunkX++) {
+        for (int chunkZ = 0; chunkZ < chunks[chunkX].size(); chunkZ++) {
             for (int y = 0; y < 64; y++) {
                 for (int x = 0; x < 16; x++) {
                     for (int z = 0; z < 16; z++) {
-                        VECTOR2D chunckPos = { chunkX, chunckZ };
+                        VECTOR2D chunkPos = { static_cast<float>(chunkX), static_cast<float>(chunkZ) };
 
-                        GLuint textureSide   = 0;
-                        GLuint textureTop    = 0;
+                        GLuint textureSide = 0;
+                        GLuint textureTop = 0;
                         GLuint textureBottom = 0;
 
-                        if (chunks[chunkX][chunckZ].layers[y].cubes[x][z].type == GRASS) {
+                        auto& cubeType = chunks[chunkX][chunkZ].layers[y].cubes[x][z].type;
+
+                        if (cubeType == GRASS) {
                             textureSide = grass_side;
                             textureTop = grass_top;
                             textureBottom = grass_bottom;
-                        }
-                        else if (chunks[chunkX][chunckZ].layers[y].cubes[x][z].type == DIRT) {
+                        } else if (cubeType == DIRT) {
                             textureSide = dirt_top_side_bottom;
                             textureTop = dirt_top_side_bottom;
                             textureBottom = dirt_top_side_bottom;
-                        }
-                        else if (chunks[chunkX][chunckZ].layers[y].cubes[x][z].type == STONE) {
+                        } else if (cubeType == STONE) {
                             textureSide = stone_top_side_bottom;
                             textureTop = stone_top_side_bottom;
                             textureBottom = stone_top_side_bottom;
                         }
 
-
-                        if (chunks[chunkX][chunckZ].layers[y].cubes[x][z].type != AIR) {
-                            // esta sessao verifica se tem algum bloco do lado, se tiver não desenha a face ao lado
-
+                        if (cubeType != AIR) {
                             bool drawFace[6] = { true, true, true, true, true, true };
 
-                            // cima                
-                            if (y >= 63) drawFace[4] = true;
-                            else if (chunks[chunkX][chunckZ].layers[y + 1].cubes[x][z].type != AIR) drawFace[4] = false;
+                            if (y < 63 && chunks[chunkX][chunkZ].layers[y + 1].cubes[x][z].type != AIR) drawFace[4] = false;
+                            if (y > 0 && chunks[chunkX][chunkZ].layers[y - 1].cubes[x][z].type != AIR) drawFace[5] = false;
+                            if (x > 0 && chunks[chunkX][chunkZ].layers[y].cubes[x - 1][z].type != AIR) drawFace[1] = false;
+                            if (x < 15 && chunks[chunkX][chunkZ].layers[y].cubes[x + 1][z].type != AIR) drawFace[2] = false;
+                            if (z > 0 && chunks[chunkX][chunkZ].layers[y].cubes[x][z - 1].type != AIR) drawFace[0] = false;
+                            if (z < 15 && chunks[chunkX][chunkZ].layers[y].cubes[x][z + 1].type != AIR) drawFace[3] = false;
 
-                            // baixo
-                            if (y <= 0) drawFace[5] = true;
-                            else if (y <= 63)
-                                if (chunks[chunkX][chunckZ].layers[y - 1].cubes[x][z].type != AIR) drawFace[5] = false;
-
-                            // esquerda
-                            if (x <= 0) drawFace[1] = true;
-                            else if (chunks[chunkX][chunckZ].layers[y].cubes[x - 1][z].type != AIR) drawFace[1] = false;
-
-                            // direita
-                            if (x >= 15) drawFace[2] = true;
-                            else if (chunks[chunkX][chunckZ].layers[y].cubes[x + 1][z].type != AIR) drawFace[2] = false;
-
-                            // frente
-                            if (z <= 0) drawFace[0] = true;
-                            else if (chunks[chunkX][chunckZ].layers[y].cubes[x][z - 1].type != AIR) drawFace[0] = false;
-
-                            // tras
-                            if (z >= 15) drawFace[3] = true;
-                            else if (chunks[chunkX][chunckZ].layers[y].cubes[x][z + 1].type != AIR) drawFace[3] = false;
-
-                            draw_cube(chunks[chunkX][chunckZ].layers[y].cubes[x][z], textureSide, textureTop, textureBottom, drawFace, chunk1.layers[y].cubes[x][z].selected, chunckPos);
+                            draw_cube(chunks[chunkX][chunkZ].layers[y].cubes[x][z], textureSide, textureTop, textureBottom, drawFace, chunks[chunkX][chunkZ].layers[y].cubes[x][z].selected, chunkPos);
                         }
                     }
                 }
@@ -242,6 +221,7 @@ void draw_chunks() {
         }
     }
 }
+
 
 void display() {
     #pragma region Camera Logic
@@ -303,10 +283,10 @@ int main(int argc, char** argv) {
     create_layer();
     create_chunk();
 
-    generate_noise_map(16, 16, &chunks[0][0], 15.0f, 7.0f, 10.0f);
-    generate_noise_map(16, 16, &chunks[1][0], 15.0f, 7.0f, 10.0f);
-    generate_noise_map(16, 16, &chunks[0][1], 15.0f, 7.0f, 10.0f);
-    generate_noise_map(16, 16, &chunks[1][1], 15.0f, 7.0f, 10.0f);
+    generate_noise_map(16, 16, &chunks[0][0], 20.0f, 3.0f, 10.0f);
+    generate_noise_map(16, 16, &chunks[1][0], 20.0f, 3.0f, 10.0f);
+    generate_noise_map(16, 16, &chunks[0][1], 20.0f, 3.0f, 10.0f);
+    generate_noise_map(16, 16, &chunks[1][1], 20.0f, 3.0f, 10.0f);
 
     glutDisplayFunc(display);
     glutIdleFunc(idle);
